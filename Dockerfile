@@ -4,4 +4,5 @@ COPY LApi.py .
 COPY requirements.txt .
 RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip3 install -r requirements.txt
+EXPOSE 3307
 CMD ["python","LApi.py"]

@@ -316,5 +316,5 @@ def downloadById():
 
 if __name__ == '__main__':
     # app.run(host='0.0.0.0', port=3307)
-    server = pywsgi.WSGIServer(('127.0.0.1', 3307), app)
+    server = pywsgi.WSGIServer(('0.0.0.0', 3307), app)
     server.serve_forever()
