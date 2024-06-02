@@ -1,0 +1,1 @@
+import{_ as a,c as e,o,a1 as t}from"./chunks/framework.BlxYlo1f.js";const p=JSON.parse('{"title":"LanzouDir","description":"","frontmatter":{},"headers":[],"relativePath":"README.md","filePath":"README.md"}'),i={name:"README.md"},l=t("",6),r=[l];function n(s,_,c,d,h,u){return o(),e("div",null,r)}const m=a(i,[["render",n]]);export{p as __pageData,m as default};
