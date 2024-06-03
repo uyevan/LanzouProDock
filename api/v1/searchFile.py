@@ -3,13 +3,12 @@ import re
 
 import flask
 import requests
-from flask import Flask
 
-app = Flask(__name__)
+from router import app
 
 
-@app.route('/search', methods=["GET"])
-def search():
+@app.route('/v1/searchFile', methods=["GET"])
+def searchFile():
     try:
         url = flask.request.values.get("url")
         wd = flask.request.values.get("wd")

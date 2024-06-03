@@ -1,13 +1,12 @@
 import flask
 import requests
-from flask import Flask
 from lxml import etree
 
-app = Flask(__name__)
+from router import app
 
 
-@app.route('/getFolders', methods=["GET"])
-def getFolders():
+@app.route('/v1/getDirectory', methods=["GET"])
+def getDirectory():
     try:
         url = flask.request.values.get("url")
         if url == '':

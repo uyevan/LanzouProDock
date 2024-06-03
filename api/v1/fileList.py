@@ -1,40 +1,28 @@
+import json
+import re
+
 import flask
 import requests
-from flask import Flask, session
-from lxml import etree
+from flask import session
 
-app = Flask(__name__)
+from router import app
 
 
 # noinspection DuplicatedCode
-@app.route('/getAll', methods=["GET"])
-def getAll():
+@app.route('/v1/getFiles', methods=["GET"])
+def getFiles():
     try:
         url = flask.request.values.get("url")
         page = flask.request.values.get("page")
         if url == '':
-            return {"code": 400, "status": "Url链接不能为空", "folders": None, "files": None}
+            return {"code": 400, "status": "Url链接不能为空", "files": None}
         if page == '':
             page = 1
         # 使用你的原始代码获取文件夹数据
         ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36 HBPC/12.1.2.300"
         with requests.get(url, headers={'User-agent': ua}) as res:
             content = res.text
-            html = etree.HTML(content)  # 解析成html对象
-
-            # 获取文件夹
-            foldersName = html.xpath('//*[@id="folder"]/div[*]/a/div[2]/text()')
-            foldersDes = html.xpath('//*[@id="folder"]/div[*]/a/div[2]/div[1]/text()')
-            foldersUrl = html.xpath('//*[@id="folder"]/div[*]/a/@href')
-            FOLDERS = []  # 存储文件夹信息
-            for folder in range(len(foldersUrl)):
-                folderJson = {
-                    "name": foldersName[folder],
-                    "description": foldersDes[folder],
-                    "url": foldersUrl[folder]
-                }
-                FOLDERS.append(folderJson)
-
+            # html = etree.HTML(content)  # 解析成html对象
             # 获取文件
             requestsSession = requests.Session()
             requestsSession.headers.update({
@@ -61,14 +49,16 @@ def getAll():
                 "codelen": "1"
             }
             requestsSession.cookies.update(cookies)
+            # 尝试从会话中获取参数
 
             url_match = session.get('url_match')
             file_match = session.get('file_match')
             t_match = session.get('t_match')
             k_match = session.get('k_match')
-            print('会话中存在：', url_match, '|', file_match, '|', t_match, '|', k_match)
+            # print('会话中存在：', url_match, '|', file_match, '|', t_match, '|', k_match)
+
             # 如果参数不存在于会话中，则从请求中获取它们
-            if not url_match or not file_match or not t_match or not k_match or url_match is None or file_match is None or t_match is None or k_match is None:
+            if not url_match or not file_match or not t_match or not k_match:
                 url_match = re.search(r"url\s*:\s*'(/filemoreajax\.php\?file=\d+)'", content).group(1)  # 截取请求地址
                 file_match = re.search(r"\d+", url_match).group()  # fid
                 t_match = re.search(r"var\s+i\w+\s*=\s*'([^']*)';", content).group(1)  # 时间戳
@@ -78,7 +68,7 @@ def getAll():
                 session['file_match'] = file_match
                 session['t_match'] = t_match
                 session['k_match'] = k_match
-                print('会话中不存在：', url_match, '|', file_match, '|', t_match, '|', k_match)
+                # print('会话中不存在：', url_match, '|', file_match, '|', t_match, '|', k_match)
 
             url = f"https://www.lanzoux.com" + url_match
             data = {
@@ -97,7 +87,7 @@ def getAll():
             response = requestsSession.post(url, data=data,
                                             headers={"Content-Type": "application/x-www-form-urlencoded"})
             FILES = json.loads(response.text)
-            data = {"code": 200, "status": "获取成功", "folders": FOLDERS, "files": FILES}
+            data = {"code": 200, "status": "获取成功", "files": FILES}
             '''js = json.dumps(data, sort_keys=True, indent=4, separators=(',', ':'))
             print(js)'''
             return data

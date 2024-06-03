@@ -1,21 +1,22 @@
-import flask
-import requests
-from flask import Flask, session
+import json
+import re
 
-app = Flask(__name__)
+import requests
+from flask import session
+
+from router import app
 
 
 # noinspection DuplicatedCode
-@app.route('/getFiles', methods=["GET"])
-def getFiles():
+@app.route('/v2/getFiles/<Lid>/<int:Page>', methods=["GET"])
+def getFilesV2(Lid, Page):
     try:
-        url = flask.request.values.get("url")
-        page = flask.request.values.get("page")
-        if url == '':
-            return {"code": 400, "status": "Url链接不能为空", "files": None}
-        if page == '':
+        if Lid == '':
+            return {"code": 400, "status": "Lid不能为空", "files": None}
+        if Page == '':
             page = 1
         # 使用你的原始代码获取文件夹数据
+        url = f'https://www.lanzoux.com/{Lid}'
         ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36 HBPC/12.1.2.300"
         with requests.get(url, headers={'User-agent': ua}) as res:
             content = res.text
@@ -52,7 +53,7 @@ def getFiles():
             file_match = session.get('file_match')
             t_match = session.get('t_match')
             k_match = session.get('k_match')
-            print('会话中存在：', url_match, '|', file_match, '|', t_match, '|', k_match)
+            # print('会话中存在：', url_match, '|', file_match, '|', t_match, '|', k_match)
 
             # 如果参数不存在于会话中，则从请求中获取它们
             if not url_match or not file_match or not t_match or not k_match:
@@ -65,14 +66,14 @@ def getFiles():
                 session['file_match'] = file_match
                 session['t_match'] = t_match
                 session['k_match'] = k_match
-                print('会话中不存在：', url_match, '|', file_match, '|', t_match, '|', k_match)
+                # print('会话中不存在：', url_match, '|', file_match, '|', t_match, '|', k_match)
 
             url = f"https://www.lanzoux.com" + url_match
             data = {
                 "lx": "2",
                 "fid": file_match,
                 "uid": "941967",
-                "pg": f"{page}",
+                "pg": f"{Page}",
                 "rep": "0",
                 "t": t_match,
                 "k": k_match,

@@ -1,8 +1,8 @@
 FROM python:3.10.10-alpine
 WORKDIR /app
-COPY LApi.py .
+COPY application.py .
 COPY requirements.txt .
 RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip3 install -r requirements.txt
 EXPOSE 3307
-CMD ["python","LApi.py"]
+CMD ["python","application.py"]
