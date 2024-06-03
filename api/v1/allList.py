@@ -6,9 +6,10 @@ import requests
 from flask import session
 from lxml import etree
 
-from router import app  # noinspection DuplicatedCode
+from router import app
 
 
+# noinspection DuplicatedCode
 @app.route('/v1/getFilesAndDirectories', methods=["GET"])
 def getFilesAndDirectories():
     try:

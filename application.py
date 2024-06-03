@@ -17,6 +17,10 @@ from api.v2.fileList import getFilesV2
 from api.v2.folderList import getDirectoryV2
 from api.v2.searchFile import searchFileV2
 
+"""index"""
+from api.index import indexA
+from api.index import indexB
+
 if __name__ == '__main__':
     # app.run(host='0.0.0.0', port=3307)
     server = pywsgi.WSGIServer(('0.0.0.0', 3307), app)
