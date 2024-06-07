@@ -11,6 +11,7 @@ from router import app
 # noinspection DuplicatedCode
 @app.route('/v2/getFilesAndDirectories/<Lid>/<int:Page>', methods=["GET"])
 def getFilesAndDirectoriesV2(Lid, Page):
+    session.permanent = True
     try:
         if Lid == '':
             return {"code": 400, "status": "Lid不能为空", "folders": None, "files": None}

@@ -1,4 +1,5 @@
 import requests
+from flask import session
 from lxml import etree
 
 from router import app
@@ -6,6 +7,7 @@ from router import app
 
 @app.route('/v2/getDirectory/<Lid>', methods=["GET"])
 def getDirectoryV2(Lid):
+    session.permanent = True
     try:
         if Lid == '':
             return {"code": 400, "status": "Lid不能为空", "folders": None}

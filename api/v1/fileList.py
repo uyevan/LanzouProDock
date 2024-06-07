@@ -11,6 +11,7 @@ from router import app
 # noinspection DuplicatedCode
 @app.route('/v1/getFiles', methods=["GET"])
 def getFiles():
+    session.permanent = True
     try:
         url = flask.request.values.get("url")
         page = flask.request.values.get("page")

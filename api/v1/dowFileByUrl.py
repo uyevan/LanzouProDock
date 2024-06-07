@@ -1,4 +1,5 @@
 import flask
+from flask import session
 
 from api.lib.DownLoadLib import get_final_download_link
 from router import app
@@ -6,6 +7,7 @@ from router import app
 
 @app.route('/v1/parseByUrl', methods=["GET"])
 def parseByUrl():
+    session.permanent = True
     url = flask.request.values.get("url")
     Type = flask.request.values.get("type")
     # @外部接口范文
