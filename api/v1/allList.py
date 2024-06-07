@@ -12,6 +12,7 @@ from router import app
 # noinspection DuplicatedCode
 @app.route('/v1/getFilesAndDirectories', methods=["GET"])
 def getFilesAndDirectories():
+    session.permanent = True
     try:
         url = flask.request.values.get("url")
         page = flask.request.values.get("page")

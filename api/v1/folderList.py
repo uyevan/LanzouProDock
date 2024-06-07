@@ -1,5 +1,6 @@
 import flask
 import requests
+from flask import session
 from lxml import etree
 
 from router import app
@@ -7,6 +8,7 @@ from router import app
 
 @app.route('/v1/getDirectory', methods=["GET"])
 def getDirectory():
+    session.permanent = True
     try:
         url = flask.request.values.get("url")
         if url == '':

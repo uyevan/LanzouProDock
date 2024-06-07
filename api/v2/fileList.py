@@ -10,6 +10,7 @@ from router import app
 # noinspection DuplicatedCode
 @app.route('/v2/getFiles/<Lid>/<int:Page>', methods=["GET"])
 def getFilesV2(Lid, Page):
+    session.permanent = True
     try:
         if Lid == '':
             return {"code": 400, "status": "Lid不能为空", "files": None}

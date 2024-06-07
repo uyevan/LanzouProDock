@@ -3,12 +3,14 @@ import re
 
 import flask
 import requests
+from flask import session
 
 from router import app
 
 
 @app.route('/v1/searchFile', methods=["GET"])
 def searchFile():
+    session.permanent = True
     try:
         url = flask.request.values.get("url")
         wd = flask.request.values.get("wd")

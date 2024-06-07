@@ -2,12 +2,14 @@ import json
 import re
 
 import requests
+from flask import session
 
 from router import app
 
 
 @app.route('/v2/searchFile/<Lid>/<Wd>', methods=["GET"])
 def searchFileV2(Lid, Wd):
+    session.permanent = True
     try:
         if Lid == '':
             return {"code": 400, "status": "Lid不能为空", "files": None}
