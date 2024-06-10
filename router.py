@@ -9,5 +9,5 @@ app = Flask(__name__,
             static_url_path='')
 app.config['SESSION_TYPE'] = 'filesystem'
 app.secret_key = 'fkdjsafjdkfdlkjfadskjfadskljdsfklj'
-app.permanent_session_lifetime = timedelta(minutes=1)  # 存储5秒
+app.permanent_session_lifetime = timedelta(minutes=1)  # 存储1分钟
 Session(app)
