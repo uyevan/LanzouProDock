@@ -23,6 +23,11 @@ def indexD():
     return render_template('api-dock-v2.html')
 
 
+@app.route('/api-dock-v3.html', methods=['GET'])
+def indexE():
+    return render_template('api-dock-v3.html')
+
+
 @app.route('/api-about.html', methods=['GET'])
 def indexF():
     return render_template('api-about.html')

@@ -17,9 +17,21 @@ from api.v2.fileList import getFilesV2
 from api.v2.folderList import getDirectoryV2
 from api.v2.searchFile import searchFileV2
 
+"""V3"""
+from api.v3.getFiles import iGetFiles
+from api.v3.getFolderId import iGetFolderId
+from api.v3.searchFile import iSearchFile
+from api.v3.dowFile import iParse
+
 """index"""
 from api.index import indexA
 from api.index import indexB
+from api.index import indexC
+from api.index import indexD
+from api.index import indexE
+from api.index import indexF
+from api.index import index404
+from api.index import page_not_found
 
 if __name__ == '__main__':
     # app.run(host='0.0.0.0', port=3307)
