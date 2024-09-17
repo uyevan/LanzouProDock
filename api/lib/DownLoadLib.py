@@ -30,11 +30,11 @@ def getPFile(url, password):
     response = requests.get(url, headers=headers)
     url_pattern = re.compile(r"url\s*:\s*'(/ajaxm\.php\?file=\d+)'")
     url_match = url_pattern.search(response.text).group(1)
-    skdklds_pattern = re.compile(r"var\s+skdklds\s*=\s*'([^']*)';")
-    skdklds_match = skdklds_pattern.search(response.text).group(1)
+    skewbalds_pattern = re.compile(r"var\s+skdklds\s*=\s*'([^']*)';")
+    skewbalds_match = skewbalds_pattern.search(response.text).group(1)
     data = {
         'action': 'downprocess',
-        'sign': skdklds_match,
+        'sign': skewbalds_match,
         'p': password,
     }
     print(data)
@@ -118,12 +118,13 @@ def getDPFile(url, fType):
 def get_final_download_link(url, Type='new', pwd=''):
     if url == '' or type == '':
         return '参数不能为空'
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
+    }
+    response = requests.get(url, headers=headers)
     if pwd == '':
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
-        }
-        response = requests.get(url, headers=headers)
         if "<title>文件</title>" in response.text:
             return '此文件需要密码'
-        return getDPFile(url, Type)
+    if "文件取消分享了" in response.text:
+        return '来晚啦...文件取消分享了'
     return getPFile(url, pwd)
