@@ -28,23 +28,39 @@ def getPFile(url, password):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
     }
     response = requests.get(url, headers=headers)
+
+    print(response.text)
+
+    # 添加错误处理
     url_pattern = re.compile(r"url\s*:\s*'(/ajaxm\.php\?file=\d+)'")
-    url_match = url_pattern.search(response.text).group(1)
+    url_match = url_pattern.search(response.text)
+    print(url_match)
+    if not url_match:
+        return "无法找到下载链接"
+
     skewbalds_pattern = re.compile(r"var\s+skdklds\s*=\s*'([^']*)';")
-    skewbalds_match = skewbalds_pattern.search(response.text).group(1)
+    skewbalds_match = skewbalds_pattern.search(response.text)
+    if not skewbalds_match:
+        return "无法找到验证信息"
+
     data = {
         'action': 'downprocess',
-        'sign': skewbalds_match,
+        'sign': skewbalds_match.group(1),
         'p': password,
     }
-    print(data)
+
     headers = {
         "Referer": url,
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
     }
-    response2 = requests.post(f"https://{doMain}{url_match}", headers=headers, data=data)
-    data = json.loads(response2.text)
-    full_url = "{}/file/{}".format(data['dom'], data['url'])
+    response2 = requests.post(f"https://{doMain}{url_match.group(1)}", headers=headers, data=data)
+
+    try:
+        data = json.loads(response2.text)
+        full_url = "{}/file/{}".format(data['dom'], data['url'])
+    except (json.JSONDecodeError, KeyError):
+        return "解析响应数据失败"
+
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
@@ -58,7 +74,11 @@ def getPFile(url, password):
         "upgrade-insecure-requests": "1",
         "cookie": "down_ip=1"
     }
+
     response3 = requests.get(full_url, headers=headers, allow_redirects=False)
+    if 'Location' not in response3.headers:
+        return "无法获取最终下载链接"
+
     return response3.headers['Location']
 
 
@@ -127,4 +147,5 @@ def get_final_download_link(url, Type='new', pwd=''):
             return '此文件需要密码'
     if "文件取消分享了" in response.text:
         return '来晚啦...文件取消分享了'
-    return getPFile(url, pwd)
+    # return getPFile(url, pwd)
+    return getDPFile(url, Type)

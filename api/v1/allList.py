@@ -27,17 +27,24 @@ def getFilesAndDirectories():
             html = etree.HTML(content)  # 解析成html对象
 
             # 获取文件夹
-            foldersName = html.xpath('//*[@id="folder"]/div[*]/a/div[2]/text()')
-            foldersDes = html.xpath('//*[@id="folder"]/div[*]/a/div[2]/div[1]/text()')
-            foldersUrl = html.xpath('//*[@id="folder"]/div[*]/a/@href')
-            FOLDERS = []  # 存储文件夹信息
-            for folder in range(len(foldersUrl)):
-                folderJson = {
-                    "name": foldersName[folder],
-                    "description": foldersDes[folder],
-                    "url": foldersUrl[folder]
-                }
-                FOLDERS.append(folderJson)
+            # 获取文件夹,增加错误处理
+            FOLDERS = []
+            try:
+                folders_elements = html.xpath('//*[@id="folder"]/div')
+                for folder in folders_elements:
+                    name = folder.xpath('.//a/div[2]/text()')
+                    description = folder.xpath('.//a/div[2]/div[1]/text()')
+                    url = folder.xpath('.//a/@href')
+
+                    if name and url:
+                        folderJson = {
+                            "name": name[0],
+                            "description": description[0] if description else "",
+                            "url": url[0]
+                        }
+                        FOLDERS.append(folderJson)
+            except Exception as e:
+                print(f"获取文件夹信息出错: {str(e)}")
 
             # 获取文件
             requestsSession = requests.Session()
