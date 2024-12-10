@@ -1,47 +1,77 @@
 import json
 import re
-
+import time
 import requests
+from functools import lru_cache
 
+# 全局常量定义
+DEFAULT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
+}
 
-def re_domain(Lurl):
-    pattern_domain = r"https?://([^/]+)"
-    match = re.search(pattern_domain, Lurl)
-    if match:
-        doMain = match.group(1)
-        return doMain
-    else:
-        return None
+DOWNLOAD_HEADERS = {
+    **DEFAULT_HEADERS,
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "accept-language": "zh-CN,zh;q=0.9",
+    "sec-ch-ua": "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Microsoft Edge\";v=\"122\"",
+    "sec-fetch-dest": "document",
+    "cookie": "down_ip=1"
+}
 
+def retry_request(func):
+    """自定义重试装饰器"""
+    def wrapper(*args, **kwargs):
+        max_retries = 3
+        retry_delay = 0.1
+        last_exception = None
+
+        for attempt in range(max_retries):
+            try:
+                return func(*args, **kwargs)
+            except requests.RequestException as e:
+                last_exception = e
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay * (2 ** attempt))  # 指数退避
+                continue
+        raise last_exception
+    return wrapper
+
+@lru_cache(maxsize=128)
+def re_domain(url):
+    match = re.match(r"https?://([^/]+)", url)
+    return match.group(1) if match else None
+
+@retry_request
+def safe_request(method, url, **kwargs):
+    """统一的请求处理函数"""
+    try:
+        kwargs.setdefault('timeout', (5, 15))
+        response = requests.request(method, url, **kwargs)
+        response.raise_for_status()
+        return response
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f"请求失败: {str(e)}")
 
 def extract_link(response_text, pattern):
-    match = re.search(pattern, response_text)
-    if match:
-        return match.group(1)
-    else:
+    try:
+        return re.search(pattern, response_text).group(1)
+    except (AttributeError, IndexError):
         return None
 
-
 def getPFile(url, password):
-    doMain = re_domain(url)
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
-    }
-    response = requests.get(url, headers=headers)
+    """优化的带密码文件处理函数"""
+    domain = re_domain(url)
+    if not domain:
+        raise ValueError("无效的URL")
 
-    print(response.text)
+    response = safe_request('GET', url, headers=DEFAULT_HEADERS)
+    text = response.text
 
-    # 添加错误处理
-    url_pattern = re.compile(r"url\s*:\s*'(/ajaxm\.php\?file=\d+)'")
-    url_match = url_pattern.search(response.text)
-    print(url_match)
-    if not url_match:
-        return "无法找到下载链接"
+    url_match = re.search(r"url\s*:\s*'(/ajaxm\.php\?file=\d+)'", text)
+    skewbalds_match = re.search(r"var\s+skdklds\s*=\s*'([^']*)';", text)
 
-    skewbalds_pattern = re.compile(r"var\s+skdklds\s*=\s*'([^']*)';")
-    skewbalds_match = skewbalds_pattern.search(response.text)
-    if not skewbalds_match:
-        return "无法找到验证信息"
+    if not all([url_match, skewbalds_match]):
+        raise ValueError("无法提取必要信息")
 
     data = {
         'action': 'downprocess',
@@ -49,60 +79,53 @@ def getPFile(url, password):
         'p': password,
     }
 
-    headers = {
-        "Referer": url,
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
-    }
-    response2 = requests.post(f"https://{doMain}{url_match.group(1)}", headers=headers, data=data)
+    headers = {**DEFAULT_HEADERS, 'Referer': url}
+    response = safe_request('POST',
+                            f"https://{domain}{url_match.group(1)}",
+                            headers=headers,
+                            data=data)
 
     try:
-        data = json.loads(response2.text)
-        full_url = "{}/file/{}".format(data['dom'], data['url'])
-    except (json.JSONDecodeError, KeyError):
-        return "解析响应数据失败"
+        json_data = response.json()
+        full_url = f"{json_data['dom']}/file/{json_data['url']}"
+    except (json.JSONDecodeError, KeyError) as e:
+        raise ValueError(f"解析响应失败: {str(e)}")
 
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-        "sec-ch-ua": "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Microsoft Edge\";v=\"122\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Windows\"",
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "none",
-        "sec-fetch-user": "?1",
-        "upgrade-insecure-requests": "1",
-        "cookie": "down_ip=1"
-    }
+    response = safe_request('GET', full_url,
+                            headers=DOWNLOAD_HEADERS,
+                            allow_redirects=False)
 
-    response3 = requests.get(full_url, headers=headers, allow_redirects=False)
-    if 'Location' not in response3.headers:
-        return "无法获取最终下载链接"
-
-    return response3.headers['Location']
-
+    return response.headers.get('Location')
 
 def getDPFile(url, fType):
+    """优化的普通文件处理函数"""
     if fType not in {'new', 'old'}:
-        return 'Type类型错误'
-    doMain = re_domain(url)
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
+        raise ValueError('Type类型错误')
+
+    domain = re_domain(url)
+    if not domain:
+        raise ValueError("无效的URL")
+
+    patterns = {
+        'new': (r'<iframe\s+class="n_downlink"\s+name="\d+"\s+src="([^"]+)"', 0),
+        'old': (r'<iframe\s+class="ifr2"\s+name="\d+"\s+src="([^"]+)"', 1)
     }
+    pattern, math_num = patterns[fType]
 
-    '''新版与旧版解析位置确定'''
-    className = r'<iframe\s+class="n_downlink"\s+name="\d+"\s+src="([^"]+)"\s+frameborder="0"\s+scrolling="no"></iframe>'
-    mathNum = 0
-    if fType == 'old':
-        className = r'<iframe\s+class="ifr2"\s+name="\d+"\s+src="([^"]+)"\s+frameborder="0"\s+scrolling="no"></iframe>'
-        mathNum = 1
+    response = safe_request('GET', url, headers=DEFAULT_HEADERS)
+    matches = re.findall(pattern, response.text)
+    if not matches or len(matches) <= math_num:
+        raise ValueError("无法找到下载框架")
 
-    response = requests.get(url, headers=headers)
-    iframe_pattern = re.compile(className)
-    matches = iframe_pattern.findall(response.text)
-    response2 = requests.get(f"https://{doMain}{matches[mathNum]}", headers=headers)
-    sign = extract_link(response2.text, r"'sign'\s*:\s*'([^']+)'")
-    url2 = extract_link(response2.text, r"url\s*:\s*'([^']+)'")
+    iframe_url = f"https://{domain}{matches[math_num]}"
+    response = safe_request('GET', iframe_url, headers=DEFAULT_HEADERS)
+
+    sign = extract_link(response.text, r"'sign'\s*:\s*'([^']+)'")
+    url2 = extract_link(response.text, r"url\s*:\s*'([^']+)'")
+
+    if not all([sign, url2]):
+        raise ValueError("无法提取签名信息")
+
     data = {
         'action': 'downprocess',
         'signs': '?ctdf',
@@ -111,41 +134,43 @@ def getDPFile(url, fType):
         'websignkey': 'bL27',
         'ves': 1
     }
-    headers = {
-        "Referer": matches[mathNum],
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
-    }
-    response3 = requests.post(f"https://{doMain}{url2}", headers=headers, data=data)
-    data = json.loads(response3.text)
-    full_url = data['dom'] + "/file/" + data['url']
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-        "sec-ch-ua": "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Microsoft Edge\";v=\"122\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Windows\"",
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "none",
-        "sec-fetch-user": "?1",
-        "upgrade-insecure-requests": "1",
-        "cookie": "down_ip=1"
-    }
-    response4 = requests.get(full_url, headers=headers, allow_redirects=False)
-    return response4.headers['Location']
 
+    headers = {**DEFAULT_HEADERS, 'Referer': matches[math_num]}
+    response = safe_request('POST',
+                            f"https://{domain}{url2}",
+                            headers=headers,
+                            data=data)
+
+    try:
+        json_data = response.json()
+        full_url = f"{json_data['dom']}/file/{json_data['url']}"
+    except (json.JSONDecodeError, KeyError) as e:
+        raise ValueError(f"解析响应失败: {str(e)}")
+
+    response = safe_request('GET', full_url,
+                            headers=DOWNLOAD_HEADERS,
+                            allow_redirects=False)
+
+    return response.headers.get('Location')
 
 def get_final_download_link(url, Type='new', pwd=''):
-    if url == '' or type == '':
+    """主函数优化"""
+    if not url or not Type:
         return '参数不能为空'
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
-    }
-    response = requests.get(url, headers=headers)
-    if pwd == '':
-        if "<title>文件</title>" in response.text:
+
+    try:
+        response = safe_request('GET', url, headers=DEFAULT_HEADERS)
+        text = response.text
+
+        if not pwd and "<title>文件</title>" in text:
             return '此文件需要密码'
-    if "文件取消分享了" in response.text:
-        return '来晚啦...文件取消分享了'
-    # return getPFile(url, pwd)
-    return getDPFile(url, Type)
+        if "文件取消分享了" in text:
+            return '来晚啦...文件取消分享了'
+
+        # 根据是否有密码选择处理函数
+        handler = getPFile if pwd else getDPFile
+        result = handler(url, pwd if pwd else Type)
+        return result or '获取下载链接失败'
+
+    except Exception as e:
+        return f'处理失败: {str(e)}'
