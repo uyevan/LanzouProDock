@@ -9,6 +9,10 @@ COPY api ./api
 COPY templates ./templates
 COPY gunicorn_conf.py .
 
+ENV PYTHONIOENCODING=utf8
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
 # 配置国内源，加速依赖安装
 RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip3 install -r requirements.txt

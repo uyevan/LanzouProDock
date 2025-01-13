@@ -36,4 +36,5 @@ from api.index import page_not_found
 if __name__ == '__main__':
     # app.run(host='0.0.0.0', port=3307)
     server = pywsgi.WSGIServer(('0.0.0.0', 3307), app)
+    print("Server started")
     server.serve_forever()
