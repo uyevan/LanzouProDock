@@ -17,12 +17,16 @@ def iGetFolderId(shareId, Page, Limit):
             Limit = 30
         rUrl = 'https://api.ilanzou.com/unproved/recommend/list'
         rParams = {
+            'devType': 3,
+            'devModel': 'Chrome',
+            'uuid': 'HGFdZF5RJGv61cyMiY7S2',
             'shareId': shareId,
             'offset': Page,
             'limit': Limit
         }
         # 获取列表数据并返回
         response = requests.get(url=rUrl, params=rParams)
+        print(response.text)
         if response.status_code == 200:
             LISTS = json.loads(response.text)
             data = {"code": 200, "status": "获取成功", "folders": LISTS['list']}

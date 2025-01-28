@@ -17,6 +17,9 @@ def iSearchFile(shareId, folderId, Wd, Page, Limit):
             Limit = 30
         rUrl = 'https://api.ilanzou.com/unproved/share/list'
         rParams = {
+            'devType': 3,
+            'devModel': 'Chrome',
+            'uuid': 'HGFdZF5RJGv61cyMiY7S2',
             'shareId': shareId,
             'folderId': folderId,
             'offset': Page,

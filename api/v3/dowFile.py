@@ -97,6 +97,8 @@ def iParse301(fileId):
             str('downloadId'): quote(aes_ecb_pkcs7_encrypt(f"{fileId}|", 'lanZouY-disk-app')),
             str('enable'): 1,
             str('devType'): 3,
+            str('devModel'): 'Chrome',
+            str('uuid'): 'HGFdZF5RJGv61cyMiY7S2',
             str('uuid'): quote(generate_random_string(21)),
             str('timestamp'): quote(aes_ecb_pkcs7_encrypt(rTime, 'lanZouY-disk-app')),
             str('auth'): quote(aes_ecb_pkcs7_encrypt(f"{fileId}|{rTime}", 'lanZouY-disk-app'))
@@ -165,6 +167,7 @@ def iParse301(fileId):
     except Exception as e:
         logger.error(f"请求出错:{str(e)}")
         return {"code": 500, "status": f"Server error: {str(e)}", "url": None}
+
 
 @app.route('/v3/iParse/<int:fileId>', methods=["GET"])
 def iParse(fileId):
