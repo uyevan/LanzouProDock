@@ -25,8 +25,23 @@ def iGetFiles(shareId, folderId, Page, Limit):
             'offset': Page,
             'limit': Limit
         }
+        # 添加请求头
+        headers = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br, zstd',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+            'Cache-Control': 'max-age=0',
+            'Connection': 'keep-alive',
+            'DNT': '1',
+            'Host': 'api.ilanzou.com',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
+            'sec-ch-ua': '"Not(A:Brand";v="99", "Microsoft Edge";v="133", "Chromium";v="133"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-gpc': '1'
+        }
         # 获取列表数据并返回
-        response = requests.get(url=rUrl, params=rParams)
+        response = requests.get(url=rUrl, params=rParams, headers=headers)  # 添加 headers 参数
         if response.status_code == 200:
             LISTS = json.loads(response.text)
             data = {"code": 200, "status": "获取成功", "files": LISTS['list']}

@@ -80,8 +80,8 @@ def generate_random_string(length):
     return ''.join(random.choice(letters) for _ in range(length))
 
 
-@app.route('/v3/iParse301/<int:fileId>', methods=["GET"])
-def iParse301(fileId):
+@app.route('/v3/iParse/<int:fileId>', methods=["GET"])
+def iParse(fileId):
     """处理文件解析请求的接口"""
     try:
         logger.info(f"接收到文件解析请求,文件ID:{fileId}")
@@ -96,26 +96,27 @@ def iParse301(fileId):
         rParams = {
             str('downloadId'): quote(aes_ecb_pkcs7_encrypt(f"{fileId}|", 'lanZouY-disk-app')),
             str('enable'): 1,
-            str('devType'): 3,
-            str('devModel'): 'Chrome',
-            str('uuid'): 'HGFdZF5RJGv61cyMiY7S2',
+            str('devType'): 6,
             str('uuid'): quote(generate_random_string(21)),
             str('timestamp'): quote(aes_ecb_pkcs7_encrypt(rTime, 'lanZouY-disk-app')),
-            str('auth'): quote(aes_ecb_pkcs7_encrypt(f"{fileId}|{rTime}", 'lanZouY-disk-app'))
+            str('auth'): quote(aes_ecb_pkcs7_encrypt(f"{fileId}|{rTime}", 'lanZouY-disk-app')),
+            str("shareId"): generate_random_string(8)
         }
 
+        # 添加请求头
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'zh-CN,zh;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Origin': 'https://www.ilanzou.com',
-            'Referer': 'https://www.ilanzou.com/',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br, zstd',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+            'Cache-Control': 'max-age=0',
             'Connection': 'keep-alive',
-            'Cookie': 'down_ip=1'
+            'DNT': '1',
+            'Host': 'api.ilanzou.com',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
+            'sec-ch-ua': '"Not(A:Brand";v="99", "Microsoft Edge";v="133", "Chromium";v="133"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-gpc': '1'
         }
 
         logger.info("开始发送请求...")
@@ -169,8 +170,8 @@ def iParse301(fileId):
         return {"code": 500, "status": f"Server error: {str(e)}", "url": None}
 
 
-@app.route('/v3/iParse/<int:fileId>', methods=["GET"])
-def iParse(fileId):
+@app.route('/v3/iParse301/<int:fileId>', methods=["GET"])
+def iParse301(fileId):
     """构建文件解析URL的接口"""
     try:
         logger.info(f"接收到URL构建请求,文件ID:{fileId}")
@@ -185,10 +186,11 @@ def iParse(fileId):
         params = {
             'downloadId': aes_ecb_pkcs7_encrypt(f"{fileId}|", 'lanZouY-disk-app'),
             'enable': 1,
-            'devType': 3,
+            'devType': 6,
             'uuid': generate_random_string(21),
             'timestamp': aes_ecb_pkcs7_encrypt(rTime, 'lanZouY-disk-app'),
-            'auth': aes_ecb_pkcs7_encrypt(f"{fileId}|{rTime}", 'lanZouY-disk-app')
+            'auth': aes_ecb_pkcs7_encrypt(f"{fileId}|{rTime}", 'lanZouY-disk-app'),
+            'shareId': generate_random_string(8)
         }
 
         # 构建完整URL
