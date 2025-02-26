@@ -1,1 +1,4 @@
-/flask_session
+flask_session
+.idea
+__pycache__
+logs
