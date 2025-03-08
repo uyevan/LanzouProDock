@@ -2,8 +2,39 @@ import json
 
 import requests
 from flask import session
+import binascii
+import datetime
+import json
+import logging
+import os
+import random
+import string
+import time
+from logging.handlers import TimedRotatingFileHandler
+from urllib.parse import quote, urlencode
 
 from router import app
+
+# 配置日志
+log_dir = "logs"
+log_file = f"{log_dir}/crawler_{datetime.datetime.now().strftime('%Y-%m-%d')}.log"
+
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+file_handler = TimedRotatingFileHandler(
+    log_file,
+    when="midnight",
+    interval=1,
+    encoding='utf-8'
+)
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+file_handler.setFormatter(formatter)
+
+logger = logging.getLogger('crawler')
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
 
 
 @app.route('/v3/iGetFolderId/<shareId>/<int:Page>/<int:Limit>', methods=["GET"])
@@ -17,7 +48,7 @@ def iGetFolderId(shareId, Page, Limit):
             Limit = 30
         rUrl = 'https://api.ilanzou.com/unproved/recommend/list'
         rParams = {
-            'devType': 3,
+            'devType': 6,
             'devModel': 'Chrome',
             'uuid': 'HGFdZF5RJGv61cyMiY7S2',
             'shareId': shareId,
@@ -41,7 +72,9 @@ def iGetFolderId(shareId, Page, Limit):
         }
         # 获取列表数据并返回
         response = requests.get(url=rUrl, params=rParams, headers=headers)  # 添加 headers 参数
-        print(response.url)
+        logger.info(f"{response.url}")
+        logger.info(f"{response.text}")
+        # print(response.url)
         # print(response.text)
         if response.status_code == 200:
             LISTS = json.loads(response.text)
