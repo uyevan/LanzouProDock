@@ -1,4 +1,10 @@
 flask_session
 .idea
+venv
 __pycache__
 logs
+/logs/*
+/logs/.gitkeep
+**/__pycache__
+**/__pycache__/*
+**/*.pyc
